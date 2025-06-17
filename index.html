@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="he">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>השתתפות בבניית הרובוט</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <h1>בניית הרובוט</h1>
+
+    <p class="Description1">
+        הכירו את הרובוט החינוכי שלנו – חבר חכם ויצירתי לילדים!
+        הרובוט יודע להקשיב, להבין ולדבר בעברית, מזהה מחיאת כף, מציג הבעות פנים משתנות, עונה על שאלות, מספר סיפורים,
+        משמיע צלילים, ומגיב בצורה חכמה למצבים.
+        הוא מופעל בקלות דרך מסך מגע ומיועד לעורר סקרנות, לפתח שיחה, ולעזור בלמידה חווייתית – תוך שמירה על תכנים מותאמים
+        לילדים.
+    </p>
+
+    <div id="goDownContainer" onclick="document.getElementById('bottom-section').scrollIntoView({behavior:'smooth'})">
+        <div class="goDownText">⬇️ בוא נרד⬇️<br> ⬇️לעיניין⬇️</div>
+        <img src="images/chevron.png" class="ggg123" alt="בוא נרד לעניין">
+    </div>
+
+
+    <p class="prohct123">👇אלו הרכיבים שנבחרו לפרויקט👇</p>
+    <ul>
+        <div style="text-align: center; margin-bottom: 20px;">
+            <img src="images/Untitled-1.png" alt="Voice Sensor"
+                style="max-width: 200px; border-radius: 12px; box-shadow: 0 0 10px rgba(0,0,0,0.1);" />
+            <br>
+            <div style="font-size: 18px; color: #000000; font-weight: 500;">
+                המוח עצמו של הפרוייקט הרובוטי
+            </div>
+            <br>
+            <span style="color: #039be5; font-weight: bold;"> ₪1500.00 כולל מע"מ</span>
+            <br><br>
+            <div style="font-size: 18px; color: #18b318; font-weight: 500;">
+             (מעבד Rspberry pi 4)<br>
+               רובוט חכם זה יכול להיות ממש מבדר, ומעניין בימיוחד עם מערכת החיבור שלו  AI, הלב הפועם של המערכת.
+            </div>
+            <br>
+        </div>
+        <br><br>
+        <hr style="width: 150px; border: 1px solid #ccc; margin: 20px auto;" />
+    </ul>
+
+    <h3>שם:</h3>
+    <input type="text" id="nameInput" placeholder="הכנס שם">
+
+    <h3>בחר אחוז השתתפות:</h3>
+    <select id="percentSelect">
+        <option value="5">5%</option>
+        <option value="10">10%</option>
+        <option value="15">15%</option>
+        <option value="20">20%</option>
+    </select>
+
+    <br><br>
+    <button onclick="submitForm()">השתתף בבניית הרובוט</button>
+    <br><br>
+    <h3 class="ggg">👇משתתפים בפרוייקט👇</h3>
+    <table id="participantsTable">
+        <thead>
+            <tr>
+                <th>שם</th>
+                <th>אחוז השתתפות</th>
+                <th>סכום בפועל (₪)</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+
+    <div id="bottom-section"></div>
+
+    <div class="total" id="totalPercent">סה"כ השתתפו: 0%</div>
+
+    <!-- Supabase CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+
+    <script>
+       // ✅ יצירת חיבור ל-Supabase
+const client = window.supabase.createClient(
+    "https://fqjfwtspitxhryirivdo.supabase.co",
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZxamZ3dHNwaXR4aHJ5aXJpdmRvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk5NDM0MzMsImV4cCI6MjA2NTUxOTQzM30.QQPn4JthlXVF1Fb0PzqShbUpzBmA-_WJ9Zc4up4zwKg"
+);
+
+const tableBody = document.querySelector("#participantsTable tbody");
+const totalPercentEl = document.getElementById("totalPercent");
+
+// ✅ טעינת משתתפים מה-DB
+async function loadParticipants() {
+    const { data, error } = await client.from("participants").select("*");
+    if (error) return console.error("שגיאה בטעינה:", error.message);
+
+    tableBody.innerHTML = "";
+    let totalPercent = 0;
+    const totalPrice = extractPricesFromHTML();
+
+    data.forEach(part => {
+        const amount = ((part.percent / 100) * totalPrice).toFixed(2);
+        const tr = document.createElement("tr");
+        tr.innerHTML = `<td>${part.name}</td><td>${part.percent}%</td><td>${amount} ₪</td>`;
+        tableBody.appendChild(tr);
+        totalPercent += part.percent;
+    });
+
+    totalPercentEl.textContent = `סה\"כ השתתפו: ${totalPercent}%`;
+}
+
+// ✅ שליחת משתתף חדש
+async function submitForm() {
+    const name = document.getElementById("nameInput").value.trim();
+    const percent = parseInt(document.getElementById("percentSelect").value);
+    if (!name || isNaN(percent)) return alert("אנא מלא שם ובחר אחוז תקין");
+
+    const { error } = await client.from("participants").insert([{ name, percent }]);
+    if (error) return alert("שגיאה בשליחה: " + error.message);
+
+    document.getElementById("nameInput").value = "";
+    document.getElementById("percentSelect").selectedIndex = 0;
+    await loadParticipants();
+    window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+}
+
+// ✅ מחשב סכום כולל מה-HTML
+function extractPricesFromHTML() {
+    const spans = document.querySelectorAll("span");
+    let total = 0;
+    spans.forEach(span => {
+        const text = span.textContent;
+        let price = 0;
+        if (text.includes("₪")) price = parseFloat(text.replace(/[^\d.]/g, ''));
+        if (text.includes("$")) {
+            const match = text.match(/\$([\d.]+)/g);
+            if (match) {
+                match.forEach(m => {
+                    const val = parseFloat(m.replace("$", ""));
+                    price += val * 3.7;
+                });
+            }
+        }
+        total += price;
+    });
+    return total;
+}
+
+
+document.addEventListener("DOMContentLoaded", loadParticipants);
+
+
+function speak(text) {
+  const synth = window.speechSynthesis;
+  const utter = new SpeechSynthesisUtterance(text);
+  utter.lang = "he-IL";
+  utter.rate = 1.1;
+  utter.pitch = 1;
+
+  // הוספת השהיה כדי לוודא טעינת קולות
+  const waitForVoices = setInterval(() => {
+    const voices = synth.getVoices();
+    if (voices.length) {
+      clearInterval(waitForVoices);
+      const voice = voices.find(v => v.lang === "he-IL") || voices[0];
+      if (voice) utter.voice = voice;
+      synth.cancel();
+      synth.speak(utter);
+    }
+  }, 100);
+}
+
+
+
+
+
+
+async function respondToUser(userText) {
+  const lower = userText.toLowerCase();
+  let match = null;
+
+  for (const item of responses) {
+    for (const keyword of item.keywords || []) {
+      if (lower.includes(keyword)) {
+        match = item;
+        break;
+      }
+    }
+    if (match) break;
+  }
+
+  if (match) {
+    showBanner(match.response);
+    match.audio ? playAudio(match.audio) : speak(match.response);
+  } else {
+    showBanner("לא הבנתי אותך, נסה שוב.");
+    speak("לא הבנתי אותך, נסה שוב.");
+  }
+}
+
+function startListening() {
+  if ('webkitSpeechRecognition' in window) {
+    const recognition = new webkitSpeechRecognition();
+    recognition.lang = 'he-IL';
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+
+    let stopTimeout = setTimeout(() => {
+      recognition.stop();
+      showBanner("⌛ לא זוהה קול - עצרתי אוטומטית");
+    }, 6000);
+
+    recognition.onresult = function (event) {
+      clearTimeout(stopTimeout);
+      const transcript = event.results[0][0].transcript.trim();
+      if (!transcript) {
+        showBanner("❌ לא קלטתי מה אמרת.");
+        return;
+      }
+      console.log("🗣️ זוהה טקסט:", transcript);
+      respondToUser(transcript);
+    };
+
+    recognition.onerror = function (event) {
+      clearTimeout(stopTimeout);
+      console.error("🎙️ שגיאה בזיהוי קול:", event.error);
+      showBanner("❌ שגיאה בזיהוי קול: " + event.error);
+    };
+
+    recognition.onend = () => clearTimeout(stopTimeout);
+
+    recognition.start();
+    showBanner("🎙️ מקשיב... דבר עכשיו");
+  } else {
+    showBanner("🎙️ הדפדפן שלך לא תומך בזיהוי קול.");
+  }
+}
+
+
+function playAudio(fileName) {
+  const audio = new Audio(`audio/${fileName}`);
+  audio.play().catch(err => {
+    console.error("🔴 שגיאה בהפעלת audio:", err);
+  });
+}
+
+
+function showBanner(text) {
+  const banner = document.getElementById("banner");
+  banner.textContent = text;
+  banner.style.display = "block";
+}
+
+    </script>
+</body>
+
+</html>
